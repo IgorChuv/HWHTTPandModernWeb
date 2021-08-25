@@ -1,7 +1,12 @@
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,6 +64,7 @@ public class Server {
         }
     }
 
+
     private void handleConnection(Socket socket) {
         try (socket;
              final var in = socket.getInputStream();
@@ -85,6 +91,17 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public Map<String, List<NameValuePair>> getQueryParams(String URL) {
+        Map<String, List<NameValuePair>> pathAndParams = new HashMap<>();
+        try {
+            int i = URL.indexOf("?");
+            String path = URL.substring(0, i);
+            pathAndParams.put(path, new URIBuilder(URL).getQueryParams());
+        } catch (URISyntaxException ex) {
+            ex.printStackTrace();
+        }
+        return pathAndParams;
     }
 }
 
