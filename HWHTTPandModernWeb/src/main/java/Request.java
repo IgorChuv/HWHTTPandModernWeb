@@ -1,8 +1,12 @@
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Request {
@@ -10,6 +14,7 @@ public class Request {
     private final String path;
     private final Map<String, String> headers;
     private final InputStream in;
+    static Map<String, String> queryParams = new HashMap<>();
 
     private Request(String method, String path, Map<String, String> headers, InputStream in) {
         this.method = method;
@@ -54,9 +59,10 @@ public class Request {
 
         var method = parts[0];
         var path = parts[1];
+
         String line;
         Map<String, String> headers = new HashMap<>();
-        while(!(line = in.readLine()).equals("\r\n")) {
+        while (!(line = in.readLine()).equals("\r\n")) {
             var elementIndex = line.indexOf(":");
             var headerName = line.substring(0, elementIndex);
             var headerValue = line.substring(elementIndex + 2);
@@ -65,5 +71,24 @@ public class Request {
 
         }
         return new Request(method, path, headers, inputStream);
+    }
+
+    public String getQueryParam(String paramName) {
+        List<NameValuePair> queryParamsList = URLEncodedUtils.parse(URI.create(path), "UTF-8");
+        return queryParamsList.stream()
+                .filter(x -> x.getName().equalsIgnoreCase(paramName))
+                .map(NameValuePair::getValue)
+                .findFirst()
+                .orElse("");
+    }
+
+    public Map<String, String> getQueryParams() {
+        List<NameValuePair> queryParamsList = URLEncodedUtils.parse(URI.create(path), "UTF-8");
+        for (NameValuePair param : queryParamsList) {
+            String name = param.getName();
+            String value = param.getValue();
+            queryParams.put(name, value);
+        }
+        return queryParams;
     }
 }
